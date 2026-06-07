@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f9a5d5" />
+    <title>H5 抽奖活动</title>
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <nav class="top-bar" aria-label="页面导航">
+        <button class="icon-button" type="button" aria-label="返回首页">
+          <span aria-hidden="true">⌂</span>
+        </button>
+        <h1>抽奖</h1>
+        <button class="mini-program-pill" type="button" aria-label="更多">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </nav>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <p id="activitySlogan">"芒"里"抽"闲，chill一下!</p>
+        </div>
+        <div class="floating floating-share">分享</div>
+        <div class="floating floating-star">
+          <span>★</span>
+          <strong>7032</strong>
+        </div>
+        <div class="floating floating-hot">
+          <span>★</span>
+          <strong>12.8w</strong>
+        </div>
+        <div class="floating floating-heart">
+          <span>♥</span>
+          <strong>8988</strong>
+        </div>
+      </section>
+
+      <aside class="side-actions" aria-label="活动入口">
+        <button type="button" data-panel-target="prizes">我的奖品</button>
+        <button type="button" data-panel-target="rules">说明</button>
+      </aside>
+
+      <section class="chance-banner" aria-live="polite">
+        剩余 <strong id="remainingChances">0</strong> 次机会
+      </section>
+
+      <section class="wheel-wrap" aria-label="抽奖转盘">
+        <div class="wheel-shadow"></div>
+        <div class="wheel" id="wheel">
+          <canvas id="wheelCanvas" width="760" height="760" aria-hidden="true"></canvas>
+        </div>
+        <button class="spin-button" id="spinButton" type="button">
+          <span>开始</span>
+          <span>抽奖</span>
+        </button>
+      </section>
+
+      <section class="status-card" aria-label="活动状态">
+        <div>
+          <p>距离活动结束仅剩</p>
+          <div class="participant-line">参与人次 <strong id="participantCount">104</strong></div>
+        </div>
+        <div class="countdown" id="countdown" aria-live="polite">
+          <span>00天</span><span>00</span><span>00</span><span>00</span>
+        </div>
+        <div class="avatars" id="avatars" aria-label="参与用户头像"></div>
+      </section>
+
+      <section class="info-section">
+        <header>
+          <h2>中奖信息</h2>
+        </header>
+        <div class="winner-list" id="winnerList"></div>
+      </section>
+    </main>
+
+    <div class="modal-backdrop" id="modalBackdrop" hidden>
+      <section class="result-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <button class="modal-close" id="modalClose" type="button" aria-label="关闭">×</button>
+        <p class="modal-kicker">抽奖结果</p>
+        <h2 id="modalTitle">恭喜中奖</h2>
+        <div class="modal-prize" id="modalPrize"></div>
+        <p class="modal-note" id="modalNote"></p>
+        <button class="primary-button" id="modalAction" type="button">知道了</button>
+      </section>
+    </div>
+
+    <div class="panel-backdrop" id="panelBackdrop" hidden>
+      <section class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+        <button class="modal-close" id="panelClose" type="button" aria-label="关闭">×</button>
+        <h2 id="panelTitle">活动说明</h2>
+        <div id="panelContent"></div>
+      </section>
+    </div>
+
+    <script src="./assets/config.js"></script>
+    <script src="./assets/cloudbase-config.js"></script>
+    <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.10.8/cloudbase.full.js"></script>
+    <script src="./assets/shared.js"></script>
+    <script src="./assets/app.js"></script>
+  </body>
+</html>

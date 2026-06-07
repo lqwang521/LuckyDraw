@@ -94,10 +94,18 @@ CloudBase 静态网站托管配置：
 |---|---|
 | 项目框架 | 其他 |
 | 目标目录 | `./` |
-| 安装命令 | 留空 |
-| 构建命令 | 留空 |
-| 构建产物目录 | `./` |
+| 安装命令 | `npm install` |
+| 构建命令 | `npm run build` |
+| 构建产物目录 | `./dist` |
 | 部署路径 | `/` |
+
+如果 CloudBase 的自定义部署命令固定为：
+
+```bash
+tcb hosting deploy ./dist /lucky-draw-new -e active-web-d8ga85gbx6e36e259
+```
+
+则构建产物目录必须存在。当前项目的 `npm run build` 会生成 `dist/`，部署命令可继续使用 `./dist`。
 
 部署完成后访问：
 
