@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>抽奖后台管理</title>
+    <link rel="stylesheet" href="./assets/admin.css" />
+  </head>
+  <body>
+    <main class="admin-shell">
+      <header class="admin-header">
+        <div>
+          <p>Lottery Admin</p>
+          <h1>抽奖活动后台管理</h1>
+        </div>
+        <a class="preview-link" href="./index.html">预览前台</a>
+      </header>
+
+      <section class="toolbar">
+        <div>
+          <strong>奖品概率合计：<span id="probabilityTotal">0%</span></strong>
+          <p>建议合计为 100%。保存后，同一浏览器打开前台会立即使用这份配置。</p>
+        </div>
+        <div class="toolbar-actions">
+          <button id="addPrizeButton" type="button">新增奖品</button>
+          <button id="saveButton" type="button">保存配置</button>
+          <button id="exportConfigButton" type="button">导出配置</button>
+          <button class="secondary-button" id="resetButton" type="button">恢复默认</button>
+        </div>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-title">
+          <h2>奖品配置</h2>
+          <p>库存填 `-1` 表示不限量，填 `0` 表示暂不参与抽奖。</p>
+        </div>
+        <div class="table-wrap">
+          <table class="prize-table">
+            <thead>
+              <tr>
+                <th>启用</th>
+                <th>奖品名称</th>
+                <th>短名称</th>
+                <th>库存</th>
+                <th>概率%</th>
+                <th>缩略图路径</th>
+                <th>大图路径</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="prizeTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-grid">
+        <section class="admin-panel">
+          <div class="panel-title">
+            <h2>活动设置</h2>
+            <p>这些设置会影响前台剩余机会、倒计时和参与人次。</p>
+          </div>
+          <form class="settings-form" id="activityForm">
+            <label>
+              初始抽奖次数
+              <input id="initialChancesInput" type="number" min="0" step="1" />
+            </label>
+            <label>
+              参与人次
+              <input id="participantCountInput" type="number" min="0" step="1" />
+            </label>
+            <label>
+              活动结束时间
+              <input id="endAtInput" type="datetime-local" />
+            </label>
+            <label>
+              活动标语
+              <input id="sloganInput" type="text" />
+            </label>
+          </form>
+        </section>
+
+        <section class="admin-panel">
+          <div class="panel-title">
+            <h2>抽奖数据</h2>
+            <p>当前为浏览器本地流水。接 CloudBase 后会改为导出云数据库记录。</p>
+          </div>
+          <div class="record-summary">
+            <strong id="recordCount">0</strong>
+            <span>条抽奖记录</span>
+          </div>
+          <div class="toolbar-actions">
+            <button id="exportRecordsButton" type="button">导出 Excel</button>
+            <button class="secondary-button" id="clearRecordsButton" type="button">清空记录</button>
+          </div>
+          <div class="records-list" id="recordsList"></div>
+        </section>
+      </section>
+
+      <p class="admin-note">
+        上云生产使用时，请把这里的本地配置迁移到 CloudBase 数据库，并让云函数负责扣次数、扣库存和返回中奖结果。
+      </p>
+    </main>
+
+    <script src="./assets/config.js"></script>
+    <script src="./assets/cloudbase-config.js"></script>
+    <script src="https://static.cloudbase.net/cloudbase-js-sdk/2.10.8/cloudbase.full.js"></script>
+    <script src="./assets/shared.js"></script>
+    <script src="./assets/admin.js"></script>
+  </body>
+</html>
