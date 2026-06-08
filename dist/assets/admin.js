@@ -15,11 +15,23 @@
   const participantCountInput = document.getElementById("participantCountInput");
   const endAtInput = document.getElementById("endAtInput");
   const sloganInput = document.getElementById("sloganInput");
+  const adminTokenButton = document.getElementById("adminTokenButton");
+  const adminTokenModal = document.getElementById("adminTokenModal");
+  const adminTokenClose = document.getElementById("adminTokenClose");
+  const adminTokenInput = document.getElementById("adminTokenInput");
+  const adminTokenSave = document.getElementById("adminTokenSave");
+  const cloudEnabledInput = document.getElementById("cloudEnabledInput");
+  const cloudEnvIdInput = document.getElementById("cloudEnvIdInput");
+  const cloudFunctionNameInput = document.getElementById("cloudFunctionNameInput");
+  const saveCloudConfigButton = document.getElementById("saveCloudConfigButton");
+  const cloudConfigStatus = document.getElementById("cloudConfigStatus");
+  const ADMIN_TOKEN_SESSION_KEY = "mango-admin-token";
 
   let config = window.LotteryShared.getRuntimeConfig();
   let cloudRecords = null;
 
   function render() {
+    renderCloudbaseForm();
     renderActivityForm();
     renderPrizeTable();
     renderRecords();
@@ -37,13 +49,23 @@
           },
           prizes: Array.isArray(cloudConfig.prizes) ? cloudConfig.prizes : config.prizes
         };
-        cloudRecords = await loadCloudRecords();
+        if (getAdminToken()) {
+          cloudRecords = await loadCloudRecords();
+        }
       } catch (error) {
         window.alert(`读取 CloudBase 配置失败：${error.message}`);
       }
     }
 
     render();
+  }
+
+  function renderCloudbaseForm() {
+    const cloudConfig = window.LotteryShared.getCloudConfig();
+    cloudEnabledInput.checked = Boolean(cloudConfig.enabled);
+    cloudEnvIdInput.value = cloudConfig.envId || "";
+    cloudFunctionNameInput.value = cloudConfig.functionName || "lotteryApi";
+    updateCloudStatus();
   }
 
   function renderActivityForm() {
@@ -65,8 +87,8 @@
         <td><input data-field="shortName" type="text" value="${escapeAttr(prize.shortName || "")}" /></td>
         <td><input data-field="stock" type="number" step="1" value="${Number(prize.stock ?? 0)}" /></td>
         <td><input data-field="probability" type="number" min="0" step="0.01" value="${Number(prize.probability || 0)}" /></td>
-        <td><input data-field="thumb" type="text" value="${escapeAttr(prize.thumb || "")}" /></td>
-        <td><input data-field="image" type="text" value="${escapeAttr(prize.image || "")}" /></td>
+        <td>${renderImageField("thumb", prize.thumb || "", "上传缩略图")}</td>
+        <td>${renderImageField("image", prize.image || "", "上传大图")}</td>
         <td><button class="danger-button" data-action="remove" type="button">删除</button></td>
       `;
       tableBody.appendChild(row);
@@ -165,7 +187,7 @@
       .then(async () => {
         if (window.LotteryShared.isCloudEnabled()) {
           await window.LotteryShared.callCloud("saveConfig", {
-            adminToken: window.CLOUDBASE_CONFIG.adminToken,
+            adminToken: requireAdminToken(),
             activity: config.activity,
             prizes: config.prizes
           });
@@ -181,6 +203,49 @@
         window.setTimeout(() => {
           saveButton.textContent = "保存配置";
           saveButton.disabled = false;
+        }, 1200);
+      });
+  }
+
+  function saveCloudConfig() {
+    const nextConfig = {
+      enabled: cloudEnabledInput.checked,
+      envId: cloudEnvIdInput.value.trim(),
+      functionName: cloudFunctionNameInput.value.trim() || "lotteryApi"
+    };
+
+    if (nextConfig.enabled && !nextConfig.envId) {
+      window.alert("启用 CloudBase 时必须填写环境 ID。");
+      return;
+    }
+
+    window.LotteryShared.saveCloudConfig(nextConfig);
+    saveCloudConfigButton.textContent = "已保存";
+    cloudRecords = null;
+    updateCloudStatus();
+
+    Promise.resolve()
+      .then(async () => {
+        if (window.LotteryShared.isCloudEnabled()) {
+          const cloudConfig = await window.LotteryShared.callCloud("getConfig", {});
+          config = {
+            ...config,
+            activity: {
+              ...config.activity,
+              ...(cloudConfig.activity || {})
+            },
+            prizes: Array.isArray(cloudConfig.prizes) ? cloudConfig.prizes : config.prizes
+          };
+          if (getAdminToken()) cloudRecords = await loadCloudRecords();
+        }
+        render();
+      })
+      .catch((error) => {
+        window.alert(`连接 CloudBase 失败：${error.message}`);
+      })
+      .finally(() => {
+        window.setTimeout(() => {
+          saveCloudConfigButton.textContent = "保存云配置";
         }, 1200);
       });
   }
@@ -202,9 +267,33 @@
     renderRecords();
   }
 
+  function updateCloudStatus() {
+    const cloudConfig = window.LotteryShared.getCloudConfig();
+    if (!cloudConfig.enabled) {
+      cloudConfigStatus.textContent = "本地模式";
+      cloudConfigStatus.classList.remove("is-connected");
+      return;
+    }
+
+    cloudConfigStatus.textContent = cloudConfig.envId ? `CloudBase：${cloudConfig.envId}` : "CloudBase 未填写环境 ID";
+    cloudConfigStatus.classList.toggle("is-connected", Boolean(cloudConfig.envId));
+  }
+
+  function renderImageField(field, value, label) {
+    return `
+      <div class="image-field">
+        <input data-field="${field}" type="text" value="${escapeAttr(value)}" />
+        <label class="upload-button">
+          <span>${label}</span>
+          <input data-upload="${field}" type="file" accept="image/*" />
+        </label>
+      </div>
+    `;
+  }
+
   async function loadCloudRecords() {
     const result = await window.LotteryShared.callCloud("getRecords", {
-      adminToken: window.CLOUDBASE_CONFIG.adminToken,
+      adminToken: requireAdminToken(),
       limit: 1000
     });
     return Array.isArray(result.records) ? result.records : [];
@@ -249,6 +338,11 @@
     const row = button.closest("tr");
     removePrize(Number(row.dataset.index));
   });
+  tableBody.addEventListener("change", (event) => {
+    const input = event.target.closest("[data-upload]");
+    if (!input) return;
+    handleImageUpload(input);
+  });
 
   addPrizeButton.addEventListener("click", addPrize);
   saveButton.addEventListener("click", saveConfig);
@@ -268,6 +362,80 @@
       });
   });
   clearRecordsButton.addEventListener("click", clearRecords);
+  saveCloudConfigButton.addEventListener("click", saveCloudConfig);
+  adminTokenButton.addEventListener("click", openAdminTokenModal);
+  adminTokenClose.addEventListener("click", closeAdminTokenModal);
+  adminTokenSave.addEventListener("click", saveAdminToken);
+  adminTokenModal.addEventListener("click", (event) => {
+    if (event.target === adminTokenModal) closeAdminTokenModal();
+  });
 
   boot();
+
+  async function handleImageUpload(input) {
+    const file = input.files && input.files[0];
+    const field = input.dataset.upload;
+    const row = input.closest("tr");
+    const textInput = row.querySelector(`[data-field="${field}"]`);
+    const button = input.closest(".upload-button");
+    const label = button.querySelector("span");
+    const originalText = label.textContent;
+
+    try {
+      button.classList.add("is-uploading");
+      label.textContent = "上传中";
+      const url = await window.LotteryShared.uploadImage(file, field);
+      textInput.value = url;
+      textInput.dispatchEvent(new Event("input", { bubbles: true }));
+    } catch (error) {
+      window.alert(`上传失败：${error.message}`);
+    } finally {
+      input.value = "";
+      button.classList.remove("is-uploading");
+      label.textContent = originalText;
+    }
+  }
+
+  function getAdminToken() {
+    return window.sessionStorage.getItem(ADMIN_TOKEN_SESSION_KEY) || "";
+  }
+
+  function requireAdminToken() {
+    const token = getAdminToken();
+    if (token) return token;
+    openAdminTokenModal();
+    throw new Error("请先设置后台管理口令。");
+  }
+
+  function openAdminTokenModal() {
+    adminTokenInput.value = getAdminToken();
+    adminTokenModal.hidden = false;
+    adminTokenInput.focus();
+  }
+
+  function closeAdminTokenModal() {
+    adminTokenModal.hidden = true;
+  }
+
+  function saveAdminToken() {
+    const token = adminTokenInput.value.trim();
+    if (!token) {
+      window.alert("请输入后台管理口令。");
+      return;
+    }
+
+    window.sessionStorage.setItem(ADMIN_TOKEN_SESSION_KEY, token);
+    closeAdminTokenModal();
+    adminTokenButton.textContent = "后台口令已设置";
+    if (window.LotteryShared.isCloudEnabled()) {
+      Promise.resolve()
+        .then(async () => {
+          cloudRecords = await loadCloudRecords();
+          renderRecords();
+        })
+        .catch((error) => {
+          window.alert(`读取云端抽奖数据失败：${error.message}`);
+        });
+    }
+  }
 })();

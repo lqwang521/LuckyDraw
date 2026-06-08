@@ -71,18 +71,25 @@ ADMIN_TOKEN=换成一个足够长的随机字符串
 
 后台管理页保存配置、读取云端流水时会使用这个令牌。
 
-## 4. 修改前端 CloudBase 配置
+## 4. 配置前端 CloudBase 环境
 
-编辑 `assets/cloudbase-config.js`：
+公共仓库中的 `assets/cloudbase-config.js` 保持空默认值即可：
 
 ```js
 window.CLOUDBASE_CONFIG = {
-  enabled: true,
-  envId: "your-env-id-123456",
-  functionName: "lotteryApi",
-  adminToken: "和云函数 ADMIN_TOKEN 一致"
+  enabled: false,
+  envId: "",
+  functionName: "lotteryApi"
 };
 ```
+
+部署后，管理员进入 `admin.html` 的“云环境配置”面板，填写：
+
+- 是否启用 CloudBase
+- 环境 ID
+- 云函数名
+
+这些值保存在管理员浏览器本地，不写入项目代码。`ADMIN_TOKEN` 也不要写进 `assets/cloudbase-config.js`，因为该文件会随静态网站公开。后台管理页会让管理员运行时输入口令，并只保存在当前浏览器会话 `sessionStorage` 中。
 
 如果只想让用户前台抽奖，不开放后台管理，可以部署时不把 `admin.html` 暴露给用户，或者把后台页面单独放到受保护路径。
 
@@ -139,6 +146,6 @@ admin.html
 ## 7. 重要上线提醒
 
 - 前台不要再使用前端概率作为真实开奖结果，真实中奖结果必须由云函数返回。
-- 后台令牌不要提交到公开仓库；生产环境建议改成登录鉴权，而不是在前端写固定 `adminToken`。
+- 后台令牌不要提交到公开仓库；当前后台页只在运行时输入口令。生产环境建议进一步改成登录鉴权，而不是依赖共享口令。
 - 当前云函数使用事务扣次数、扣库存和写流水，能避免高并发下库存被重复扣减。
 - 如果活动访问量很大，建议增加用户限频、IP/设备风控、验证码或登录态校验。

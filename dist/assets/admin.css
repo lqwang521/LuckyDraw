@@ -187,6 +187,40 @@ input {
   height: 18px;
 }
 
+.image-field {
+  display: grid;
+  gap: 8px;
+  min-width: 210px;
+}
+
+.upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 32px;
+  padding: 0 12px;
+  color: var(--primary);
+  font-weight: 800;
+  background: #fff1f8;
+  border: 1px solid #ffd0e5;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.upload-button:hover {
+  background: #ffe5f1;
+}
+
+.upload-button input {
+  display: none;
+}
+
+.upload-button.is-uploading {
+  color: var(--muted);
+  pointer-events: none;
+}
+
 .admin-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 390px;
@@ -204,6 +238,38 @@ input {
   gap: 8px;
   color: var(--muted);
   font-weight: 700;
+}
+
+.cloudbase-form {
+  grid-template-columns: 180px minmax(0, 1fr) minmax(180px, 260px) auto;
+  align-items: end;
+}
+
+.switch-line {
+  display: flex !important;
+  grid-template-columns: none;
+  align-items: center;
+  min-height: 36px;
+}
+
+.switch-line input {
+  width: 18px;
+  height: 18px;
+}
+
+.cloudbase-actions {
+  display: grid;
+  gap: 8px;
+}
+
+#cloudConfigStatus {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+#cloudConfigStatus.is-connected {
+  color: #1b8f4d;
 }
 
 .record-summary {
@@ -263,6 +329,64 @@ input {
   padding: 0 4px;
 }
 
+.admin-modal-backdrop {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(28, 21, 31, 0.42);
+}
+
+.admin-modal-backdrop[hidden] {
+  display: none;
+}
+
+.admin-token-modal {
+  position: relative;
+  width: min(100%, 420px);
+  padding: 26px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 24px 60px rgba(35, 24, 39, 0.28);
+}
+
+.admin-token-modal h2 {
+  margin: 0 0 10px;
+}
+
+.admin-token-modal p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.admin-token-modal label {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.admin-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 32px;
+  min-height: 32px;
+  padding: 0;
+  color: var(--muted);
+  font-size: 26px;
+  line-height: 1;
+  background: transparent;
+}
+
+.admin-modal-close:hover {
+  background: transparent;
+}
+
 @media (max-width: 860px) {
   .admin-header,
   .toolbar,
@@ -272,7 +396,8 @@ input {
   }
 
   .admin-grid,
-  .settings-form {
+  .settings-form,
+  .cloudbase-form {
     grid-template-columns: 1fr;
   }
 }

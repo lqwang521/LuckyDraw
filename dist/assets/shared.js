@@ -3,6 +3,7 @@
 
   const ADMIN_CONFIG_KEY = "mango-h5-admin-config";
   const DRAW_RECORDS_KEY = "mango-h5-draw-records";
+  const CLOUDBASE_RUNTIME_CONFIG_KEY = "mango-cloudbase-runtime-config";
   let cloudApp = null;
 
   function clone(value) {
@@ -127,20 +128,36 @@
   }
 
   function isCloudEnabled() {
+    const cloudConfig = getCloudConfig();
     return Boolean(
-      window.CLOUDBASE_CONFIG &&
-        window.CLOUDBASE_CONFIG.enabled &&
-        window.CLOUDBASE_CONFIG.envId &&
-        window.cloudbase
+      cloudConfig && cloudConfig.enabled && cloudConfig.envId && window.cloudbase
     );
+  }
+
+  function getCloudConfig() {
+    const saved = readJson(CLOUDBASE_RUNTIME_CONFIG_KEY, null);
+    return {
+      ...(window.CLOUDBASE_CONFIG || {}),
+      ...(saved || {})
+    };
+  }
+
+  function saveCloudConfig(config) {
+    cloudApp = null;
+    writeJson(CLOUDBASE_RUNTIME_CONFIG_KEY, {
+      enabled: Boolean(config.enabled),
+      envId: String(config.envId || "").trim(),
+      functionName: String(config.functionName || "lotteryApi").trim() || "lotteryApi"
+    });
   }
 
   async function getCloudApp() {
     if (!isCloudEnabled()) return null;
     if (cloudApp) return cloudApp;
+    const cloudConfig = getCloudConfig();
 
     cloudApp = window.cloudbase.init({
-      env: window.CLOUDBASE_CONFIG.envId
+      env: cloudConfig.envId
     });
 
     const auth = cloudApp.auth({ persistence: "local" });
@@ -157,7 +174,7 @@
     if (!app) throw new Error("CloudBase is not enabled.");
 
     const response = await app.callFunction({
-      name: window.CLOUDBASE_CONFIG.functionName || "lotteryApi",
+      name: getCloudConfig().functionName || "lotteryApi",
       data: {
         action,
         data
@@ -171,8 +188,57 @@
     return result.data;
   }
 
+  async function uploadImage(file, type) {
+    if (!file) throw new Error("请选择图片文件。");
+    if (!file.type.startsWith("image/")) throw new Error("只能上传图片文件。");
+
+    if (!isCloudEnabled()) {
+      return readFileAsDataURL(file);
+    }
+
+    const app = await getCloudApp();
+    const extension = getFileExtension(file.name);
+    const cloudPath = `lottery-prizes/${type || "image"}-${Date.now()}-${Math.random()
+      .toString(16)
+      .slice(2)}.${extension}`;
+    const uploadResult = await app.uploadFile({
+      cloudPath,
+      filePath: file
+    });
+    const fileID = uploadResult.fileID;
+    if (!fileID) throw new Error("图片上传失败，未返回 fileID。");
+
+    try {
+      const tempResult = await app.getTempFileURL({
+        fileList: [fileID]
+      });
+      const fileInfo = tempResult.fileList && tempResult.fileList[0];
+      return (fileInfo && (fileInfo.tempFileURL || fileInfo.download_url)) || fileID;
+    } catch (error) {
+      return fileID;
+    }
+  }
+
+  function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error("读取图片失败。"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function getFileExtension(filename) {
+    const extension = String(filename || "")
+      .split(".")
+      .pop()
+      .toLowerCase();
+    return /^[a-z0-9]+$/.test(extension) ? extension : "png";
+  }
+
   window.LotteryShared = {
     ADMIN_CONFIG_KEY,
+    CLOUDBASE_RUNTIME_CONFIG_KEY,
     DRAW_RECORDS_KEY,
     addDrawRecord,
     clearDrawRecords,
@@ -180,10 +246,13 @@
     exportPrizeConfig,
     callCloud,
     getBaseConfig,
+    getCloudConfig,
     getDrawRecords,
     getRuntimeConfig,
     isCloudEnabled,
     resetRuntimeConfig,
-    saveRuntimeConfig
+    saveCloudConfig,
+    saveRuntimeConfig,
+    uploadImage
   };
 })();

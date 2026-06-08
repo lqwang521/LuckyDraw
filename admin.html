@@ -23,11 +23,37 @@
           <p>建议合计为 100%。保存后，同一浏览器打开前台会立即使用这份配置。</p>
         </div>
         <div class="toolbar-actions">
+          <button class="secondary-button" id="adminTokenButton" type="button">设置后台口令</button>
           <button id="addPrizeButton" type="button">新增奖品</button>
           <button id="saveButton" type="button">保存配置</button>
           <button id="exportConfigButton" type="button">导出配置</button>
           <button class="secondary-button" id="resetButton" type="button">恢复默认</button>
         </div>
+      </section>
+
+      <section class="admin-panel">
+        <div class="panel-title">
+          <h2>云环境配置</h2>
+          <p>环境 ID 和云函数名保存在当前浏览器本地，不写入项目代码。修改后会重新连接 CloudBase。</p>
+        </div>
+        <form class="settings-form cloudbase-form" id="cloudbaseForm">
+          <label class="switch-line">
+            <input id="cloudEnabledInput" type="checkbox" />
+            启用 CloudBase
+          </label>
+          <label>
+            环境 ID
+            <input id="cloudEnvIdInput" type="text" placeholder="例如 active-web-xxxx" />
+          </label>
+          <label>
+            云函数名
+            <input id="cloudFunctionNameInput" type="text" placeholder="lotteryApi" />
+          </label>
+          <div class="cloudbase-actions">
+            <button id="saveCloudConfigButton" type="button">保存云配置</button>
+            <span id="cloudConfigStatus">未连接</span>
+          </div>
+        </form>
       </section>
 
       <section class="admin-panel">
@@ -44,8 +70,8 @@
                 <th>短名称</th>
                 <th>库存</th>
                 <th>概率%</th>
-                <th>缩略图路径</th>
-                <th>大图路径</th>
+                <th>缩略图</th>
+                <th>大图</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -101,6 +127,19 @@
         上云生产使用时，请把这里的本地配置迁移到 CloudBase 数据库，并让云函数负责扣次数、扣库存和返回中奖结果。
       </p>
     </main>
+
+    <div class="admin-modal-backdrop" id="adminTokenModal" hidden>
+      <section class="admin-token-modal" role="dialog" aria-modal="true" aria-labelledby="adminTokenTitle">
+        <button class="admin-modal-close" id="adminTokenClose" type="button" aria-label="关闭">×</button>
+        <h2 id="adminTokenTitle">后台管理口令</h2>
+        <p>口令只保存在当前浏览器会话中，不会写入项目代码。请填写云函数环境变量 `ADMIN_TOKEN` 对应的值。</p>
+        <label>
+          管理口令
+          <input id="adminTokenInput" type="password" autocomplete="off" />
+        </label>
+        <button id="adminTokenSave" type="button">保存口令</button>
+      </section>
+    </div>
 
     <script src="./assets/config.js"></script>
     <script src="./assets/cloudbase-config.js"></script>
